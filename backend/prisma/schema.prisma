@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  BUYER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  IN_PROCESS
+}
+
+enum PaymentProvider {
+  MERCADOPAGO
+  FLOW
+}
+
+enum InvoiceStatus {
+  PENDING
+  ISSUED
+  FAILED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      Role     @default(BUYER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders   Order[]
+  messages Message[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  imageUrl    String?   @map("image_url")
+  order       Int       @default(0)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  services Service[]
+
+  @@map("categories")
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  categoryId  String   @map("category_id")
+  name        String
+  slug        String   @unique
+  description String?
+  longDesc    String?  @map("long_desc")
+  price       Int      // en centavos (CLP no tiene decimales, pero usamos Int para evitar float issues)
+  duration    String?  // ej: "60 minutos", "1 sesión"
+  stock       Int?     // null = ilimitado
+  isActive    Boolean  @default(true) @map("is_active")
+  imageUrl    String?  @map("image_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category   Category    @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+
+  @@map("services")
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  userId        String        @map("user_id")
+  total         Int           // en centavos
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  user     User        @relation(fields: [userId], references: [id])
+  items    OrderItem[]
+  payment  Payment?
+  invoice  Invoice?
+  messages Message[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String @map("order_id")
+  serviceId String @map("service_id")
+  quantity  Int    @default(1)
+  unitPrice Int    @map("unit_price") // precio snapshot al momento de compra
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id             String          @id @default(cuid())
+  orderId        String          @unique @map("order_id")
+  provider       PaymentProvider
+  providerTxId   String?         @map("provider_tx_id") // payment_id de MP o flowOrder de Flow
+  preferenceId   String?         @map("preference_id")  // preference_id de MP
+  amount         Int
+  status         PaymentStatus   @default(PENDING)
+  metadata       Json?           // respuesta completa del proveedor
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model Invoice {
+  id         String        @id @default(cuid())
+  orderId    String        @unique @map("order_id")
+  folio      Int?          // folio asignado por el SII
+  dteId      String?       @map("dte_id")  // ID interno en API Gateway
+  pdfUrl     String?       @map("pdf_url")
+  status     InvoiceStatus @default(PENDING)
+  retries    Int           @default(0)
+  issuedAt   DateTime?     @map("issued_at")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("invoices")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  orderId   String   @map("order_id")
+  senderId  String   @map("sender_id")
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sender User  @relation(fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+model SiteConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_config")
+}

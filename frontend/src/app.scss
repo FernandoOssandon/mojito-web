@@ -1,0 +1,49 @@
+// ── Mojito — Estilos globales ────────────────────────────────────────────────
+
+// Fuentes
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+// Variables de diseño esotérico
+:root {
+  --mojito-font-display: 'Cinzel', serif;
+  --mojito-font-body: 'Inter', sans-serif;
+  --mojito-gradient: linear-gradient(135deg, #1E1B4B 0%, #3B0764 50%, #0F766E 100%);
+  --mojito-card-bg: rgba(30, 27, 75, 0.6);
+  --mojito-border: rgba(107, 33, 168, 0.3);
+}
+
+// Tipografía base
+body {
+  font-family: var(--mojito-font-body);
+}
+
+.text-display {
+  font-family: var(--mojito-font-display);
+  letter-spacing: 0.04em;
+}
+
+// Hero gradient
+.mojito-hero {
+  background: var(--mojito-gradient);
+  min-height: 100vh;
+}
+
+// Glassmorphism card
+.card-glass {
+  background: var(--mojito-card-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--mojito-border);
+  border-radius: 16px;
+}
+
+// Price display
+.price-tag {
+  font-family: var(--mojito-font-display);
+  font-size: 1.5rem;
+  color: var(--q-secondary);
+}
+
+// Scrollbar personalizado
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1E1B4B; }
+::-webkit-scrollbar-thumb { background: #6B21A8; border-radius: 3px; }

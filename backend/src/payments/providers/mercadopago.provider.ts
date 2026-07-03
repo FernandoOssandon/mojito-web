@@ -19,7 +19,8 @@ export class MercadoPagoProvider implements IPaymentProvider {
     const response = await preference.create({
       body: {
         external_reference: params.orderId,
-        items: params.items.map((item) => ({
+        items: params.items.map((item, index) => ({
+          id: String(index),
           title: item.title,
           quantity: item.quantity,
           unit_price: item.unitPrice / 100, // convertir centavos a pesos

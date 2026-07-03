@@ -1,10 +1,10 @@
-import { configure } from 'quasar/wrappers';
+const { configure } = require('quasar/wrappers');
 
-export default configure((/* ctx */) => {
+module.exports = configure((/* ctx */) => {
   return {
     eslint: { fix: true },
 
-    boot: ['axios', 'pinia'],
+    boot: ['pinia', 'axios'],
 
     css: ['app.scss'],
 
